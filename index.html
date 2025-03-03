@@ -1,1 +1,124 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DDoS Detector</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #121212;
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+        h1 {
+            color: #ff4757;
+        }
+        input, button {
+            padding: 10px;
+            margin: 10px;
+            font-size: 16px;
+        }
+        table {
+            width: 100%;
+            max-width: 800px;
+            margin: auto;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #555;
+            text-align: center;
+        }
+        th {
+            background-color: #222;
+        }
+        .online {
+            background-color: #2ecc71;
+        }
+        .ddos {
+            background-color: #e74c3c;
+        }
+    </style>
+</head>
+<body>
 
+    <h1>DDoS Attack Detector</h1>
+    <p>Masukkan URL untuk cek apakah website sedang diserang DDoS.</p>
+    <input type="text" id="urlInput" placeholder="Masukkan URL (contoh: https://example.com)">
+    <button onclick="addWebsite()">Cek</button>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Nama Website</th>
+                <th>URL</th>
+                <th>Status</th>
+                <th>Response Time</th>
+                <th>Kode HTTP</th>
+            </tr>
+        </thead>
+        <tbody id="results"></tbody>
+    </table>
+
+    <script>
+        let websites = [];
+
+        function addWebsite() {
+            let url = document.getElementById('urlInput').value.trim();
+            if (url && !websites.includes(url)) {
+                websites.push(url);
+                checkStatus(url);
+            }
+        }
+
+        function checkStatus(url) {
+            fetch(url, { mode: 'no-cors' })
+            .then(response => {
+                let status = response.status;
+                let responseTime = new Date().getTime();
+
+                let tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${getWebsiteName(url)}</td>
+                    <td>${url}</td>
+                    <td class="${status === 200 ? 'online' : 'ddos'}">
+                        ${status === 200 ? 'Normal' : 'Kemungkinan DDoS'}
+                    </td>
+                    <td>${responseTime} ms</td>
+                    <td>${status}</td>
+                `;
+                document.getElementById('results').appendChild(tr);
+            })
+            .catch(() => {
+                let tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${getWebsiteName(url)}</td>
+                    <td>${url}</td>
+                    <td class="ddos">Kemungkinan DDoS</td>
+                    <td>-</td>
+                    <td>-</td>
+                `;
+                document.getElementById('results').appendChild(tr);
+            });
+        }
+
+        function getWebsiteName(url) {
+            try {
+                let hostname = new URL(url).hostname;
+                return hostname.charAt(0).toUpperCase() + hostname.slice(1);
+            } catch (e) {
+                return "Unknown";
+            }
+        }
+
+        setInterval(() => {
+            document.getElementById('results').innerHTML = "";
+            websites.forEach(url => checkStatus(url));
+        }, 10000);
+    </script>
+
+</body>
+</html>
